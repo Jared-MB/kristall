@@ -1,5 +1,6 @@
 import { createAppClient } from "@kristall/api/app";
 import { authInterceptor } from "@/lib/interceptors/auth.interceptor";
+import { unauthorizedInterceptor } from "@/lib/interceptors/unauthorized.interceptor";
 
 const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL;
 
@@ -10,4 +11,5 @@ if (!serverUrl) {
 export const appClient = createAppClient({
 	serverUrl,
 	requestInterceptors: [authInterceptor],
+	responseInterceptors: [unauthorizedInterceptor],
 });
