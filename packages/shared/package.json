@@ -1,0 +1,17 @@
+{
+	"name": "@kristall/shared",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit",
+		"lint": "biome lint"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.15",
+		"typescript": "6.0.3"
+	}
+}

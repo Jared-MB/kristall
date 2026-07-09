@@ -1,0 +1,22 @@
+{
+  "name": "kristall-v3",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@typescript/native-preview": "7.0.0-dev.20260421.2",
+    "prettier": "^3.7.4",
+    "turbo": "^2.9.6",
+    "typescript": "6.0.3"
+  },
+  "packageManager": "pnpm@11.2.2",
+  "engines": {
+    "node": ">=20"
+  }
+}

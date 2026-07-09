@@ -1,0 +1,28 @@
+{
+	"name": "@kristall/api",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./auth": "./src/auth/index.ts",
+		"./shop": "./src/shop/index.ts",
+		"./app": "./src/app/index.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit",
+		"lint": "biome lint"
+	},
+	"dependencies": {
+		"@kristall/http": "workspace:*",
+		"@kristall/shared": "workspace:*"
+	},
+	"peerDependencies": {
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.15",
+		"@types/node": "^20",
+		"typescript": "6.0.3"
+	}
+}

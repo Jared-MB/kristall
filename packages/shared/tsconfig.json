@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"target": "ES2022",
+		"lib": ["ES2022"],
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"moduleDetection": "force",
+		"isolatedModules": true,
+		"strict": true,
+		"rewriteRelativeImportExtensions": true,
+		"noEmit": true,
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"]
+}

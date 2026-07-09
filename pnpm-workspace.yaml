@@ -1,0 +1,20 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+ignoredBuiltDependencies:
+  - msw
+  - sharp
+  - unrs-resolver
+
+minimumReleaseAge: 1440
+ignoreScripts: true
+ignorePnpmfile: true
+
+# react-native-worklets' babel plugin requires these without declaring them,
+# which breaks under pnpm's strict node_modules layout
+packageExtensions:
+  react-native-worklets:
+    dependencies:
+      "@babel/traverse": "^7.29.0"
+      "@babel/generator": "^7.29.0"

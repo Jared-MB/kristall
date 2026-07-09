@@ -1,0 +1,1 @@
+export const buildUrl = (url: `/${string}`, params?: Record<string, any>) => `${url}?${new URLSearchParams(params).toString()}` as const
