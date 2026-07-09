@@ -1,12 +1,12 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HintRow } from "@/components/hint-row";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { appClient } from "@/modules/app/http";
-import { authClient } from "@/modules/auth/http";
+import { PROFILE_QUERY_KEY } from "@/modules/auth/keys";
+import { profileQueryOptions } from "@/modules/auth/profile";
 import { clearSessionToken } from "@/modules/auth/token-store";
 
 export default function HomeScreen() {
@@ -30,23 +30,7 @@ export default function HomeScreen() {
 					return response.data;
 				},
 			},
-			{
-				queryKey: ["profile"],
-				queryFn: async () => {
-					const [error, response] = await authClient.GET("profile");
-
-					if (error) {
-						throw error;
-					}
-
-					if (response.status !== "ok") {
-						throw new Error("Server error");
-					}
-
-					return response.data;
-				},
-				retry: false,
-			},
+			profileQueryOptions,
 		],
 	});
 
@@ -55,13 +39,8 @@ export default function HomeScreen() {
 
 	const logout = async () => {
 		await clearSessionToken();
-		// Borra el `data` de ["profile"] (invalidate no sirve: React Query
-		// conserva el data anterior cuando el refetch falla con 401).
-		queryClient.removeQueries({ queryKey: ["profile"] });
-		// La auto-redirección de Stack.Protected no atraviesa el navegador de
-		// tabs anidado, así que navegamos explícito a /login (ruta tipada).
-		// El guard queda como respaldo para bloquear volver a /home sin sesión.
-		router.push("/login");
+		await queryClient.resetQueries({ queryKey: PROFILE_QUERY_KEY });
+		router.replace("/login");
 	};
 
 	if (isPending) {
