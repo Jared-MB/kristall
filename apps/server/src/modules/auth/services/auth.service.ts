@@ -28,7 +28,12 @@ export class AuthService {
 
 		if (!account) return null;
 
-		if (account.password === pass) {
+		const isPasswordValid = await this.accountService.verifyPassword(
+			account.password,
+			pass,
+		);
+
+		if (isPasswordValid) {
 			return user;
 		}
 
@@ -62,7 +67,7 @@ export class AuthService {
 			});
 			await queryRunner.manager.save(newUser);
 
-			const newAccount = this.accountService.createOne({
+			const newAccount = await this.accountService.createOne({
 				...params.account,
 				userId: newUser._id,
 			});

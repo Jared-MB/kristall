@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import * as argon2 from "argon2";
 import { Repository } from "typeorm";
 import { CreateAccountDto } from "../dtos/create-account.dto";
 import { Account } from "../entities/account.entity";
@@ -19,13 +20,19 @@ export class AccountService {
 		});
 	}
 
-	public createOne(account: CreateAccountDto) {
+	public async createOne(account: CreateAccountDto) {
+		const hashedPassword = await argon2.hash(account.password);
+
 		return this.accountRepository.create({
-			password: account.password,
+			password: hashedPassword,
 			user: {
 				_id: account.userId,
 			},
 		});
+	}
+
+	public verifyPassword(hashedPassword: string, plainPassword: string) {
+		return argon2.verify(hashedPassword, plainPassword);
 	}
 
 	public saveOne(account: Account) {
