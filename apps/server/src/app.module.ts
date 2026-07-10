@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppController } from "./app.controller";
 import { AuthModule } from "./modules/auth/auth.module";
+import { IncidentsModule } from "./modules/incidents/incidents.module";
 import { ShopsModule } from "./modules/shops/shops.module";
 import { UsersModule } from "./modules/users/users.module";
 
@@ -19,10 +20,18 @@ import { UsersModule } from "./modules/users/users.module";
 			retryAttempts: 3,
 			synchronize: true,
 			autoLoadEntities: true,
+			cache: {
+				type: "redis",
+				options: {
+					host: "localhost",
+					port: 6379,
+				},
+			},
 		}),
 		AuthModule,
 		ShopsModule,
 		UsersModule,
+		IncidentsModule,
 	],
 	controllers: [AppController],
 })
