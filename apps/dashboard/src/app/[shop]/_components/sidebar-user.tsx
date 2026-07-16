@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	IconBadge,
 	IconBell,
 	IconCreditCard,
 	IconDeviceLaptop,
@@ -10,6 +9,7 @@ import {
 	IconSelector,
 	IconSparkles,
 	IconSun,
+	IconUserCircle,
 } from "@tabler/icons-react";
 
 import { useTheme } from "next-themes";
@@ -107,7 +107,7 @@ export function SidebarUser({
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
 							<DropdownMenuItem>
-								<IconBadge />
+								<IconUserCircle />
 								Account
 							</DropdownMenuItem>
 							<DropdownMenuItem>
