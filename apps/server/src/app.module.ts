@@ -18,7 +18,7 @@ import { UsersModule } from "./modules/users/users.module";
 			password: process.env.DB_PASSWORD,
 			database: process.env.DB_NAME,
 			retryAttempts: 3,
-			synchronize: true,
+			synchronize: false,
 			autoLoadEntities: true,
 			cache: {
 				type: "redis",
