@@ -1,12 +1,13 @@
 import { IconSelector } from "@tabler/icons-react";
-
 import { Suspense } from "react";
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
@@ -15,22 +16,24 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { getProfile } from "@/modules/auth/services/get-profile.action";
-
+import { SidebarLink } from "./_components/sidebar-link";
 import { SidebarUser } from "./_components/sidebar-user";
+import { LINKS } from "./_constants/dashboard-links";
 
 export default function HomeLayout({
 	children,
-}: {
-	children: React.ReactNode;
-}) {
+	params,
+}: LayoutProps<"/[shop]">) {
 	return (
 		<SidebarProvider>
 			<AppSidebar />
 			<div className="w-full">
-				<header className="h-16 border-b border-b-border">
+				<header className="h-16 border-b border-b-border px-6 flex items-center gap-4">
 					<SidebarTrigger />
+					<Suspense fallback={<div>Loading Name...</div>}>
+						<ShopName params={params} />
+					</Suspense>
 				</header>
 				{children}
 			</div>
@@ -38,13 +41,34 @@ export default function HomeLayout({
 	);
 }
 
+async function ShopName({ params }: Pick<LayoutProps<"/[shop]">, "params">) {
+	const { shop } = await params;
+
+	return <h1 className="font-mono">{shop}</h1>;
+}
+
 function AppSidebar() {
 	return (
 		<Sidebar>
-			<SidebarHeader>
-				<h2>Kristall</h2>
+			<SidebarHeader className="h-16 justify-center items-center">
+				<h2 className="text-purple-500 text-3xl">Kristall</h2>
 			</SidebarHeader>
-			<SidebarContent></SidebarContent>
+			<SidebarContent>
+				{LINKS.map((link) => (
+					<SidebarGroup key={link.group}>
+						<SidebarGroupLabel>{link.group}</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{link.items.map((item) => (
+									<SidebarMenuItem key={item.label}>
+										<SidebarLink item={item} />
+									</SidebarMenuItem>
+								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				))}
+			</SidebarContent>
 			<SidebarFooter>
 				<Suspense fallback={<SidebarProfileSkeleton />}>
 					<SidebarProfile />
