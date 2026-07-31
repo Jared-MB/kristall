@@ -5,22 +5,45 @@ import {
 	NotFoundException,
 	Query,
 } from "@nestjs/common";
+import { ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import {
+	ApiErrorWrapped,
+	ApiOkWrapped,
+} from "../../../common/decorators/api-response.decorator";
 import { MODULES_ARRAY, type Modules } from "../../../common/types/modules";
 import { Public } from "../../auth/decorators/public.decorator";
+import { DailyResumeDto, IncidentDto } from "../dtos/incident-resume.dto";
 import type { Incident } from "../entities/incident.entity";
 import { IncidentsService } from "../services/incidents.service";
 
+@ApiTags("incidents")
 @Controller("incidents")
 export class IncidentsController {
 	constructor(private readonly incidentsService: IncidentsService) {}
 
 	@Public()
 	@Get()
+	@ApiOperation({
+		summary: "Per-module health resume for the last 7 days",
+		description:
+			"Returns one entry per day (most recent first) with the severity of every module, derived from the incidents recorded that day.",
+	})
+	@ApiOkWrapped(DailyResumeDto, { isArray: true })
 	public getLastIncidentsResume() {
 		return this.incidentsService.getLastIncidentResume();
 	}
 
 	@Public()
+	@ApiOperation({
+		summary: "Create an incidents record based on given `module` and `type`",
+		description:
+			"Development only: responds with 404 in any other environment.",
+	})
+	@ApiQuery({ name: "module", enum: MODULES_ARRAY })
+	@ApiQuery({ name: "type", enum: ["INFO", "WARNING", "ERROR"] })
+	@ApiOkWrapped(IncidentDto)
+	@ApiErrorWrapped(400, "Invalid `module` or `type`")
+	@ApiErrorWrapped(404, "Not running in development")
 	@Get("create-test")
 	public createTest(
 		@Query("module") module: Modules,
