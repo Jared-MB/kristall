@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -5,7 +6,7 @@ const nextConfig: NextConfig = {
 	reactCompiler: true,
 	transpilePackages: ["@kristall/api", "@kristall/shared", "@kristall/http"],
 	turbopack: {
-		root: "C:/Users/amuno/Documents/proyectos/kristall-v3",
+		root: path.resolve(__dirname, "../.."),
 	},
 	cacheComponents: true,
 	typedRoutes: true,
