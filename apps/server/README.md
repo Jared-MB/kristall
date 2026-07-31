@@ -1,98 +1,156 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# @kristall/server
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API de Kristall. NestJS 11 + TypeORM 1 sobre PostgreSQL, con caché en Redis.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Puesta en marcha
 
 ```bash
-$ pnpm install
+pnpm install
+cp apps/server/.env.example apps/server/.env   # rellenar credenciales
+createdb kristall                              # TypeORM crea el esquema, no la base
+cd apps/server
+pnpm migration:run
+pnpm dev
 ```
 
-## Compile and run the project
+`migration:run` aplica todas las migraciones pendientes en orden de timestamp y las
+registra en la tabla `migrations`. Para comprobar que quedó todo aplicado:
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm migration:show   # todas deben salir con [X]
 ```
 
-## Run tests
+La migración inicial ejecuta `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`, que requiere
+permisos de superusuario en Postgres. Si el entorno usa un rol restringido, hay que crear
+la extensión una vez a mano; la migración pasa de largo gracias al `IF NOT EXISTS`.
+
+## Scripts
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm dev            # watch mode
+pnpm build          # nest build (type check con tsc + compilación con swc)
+pnpm start:prod     # ejecuta el build
+pnpm test           # unit
+pnpm test:e2e       # end to end
+pnpm lint
 ```
 
-## Deployment
+## Migraciones
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+`synchronize` está desactivado en todos los entornos. El esquema solo cambia mediante
+migraciones versionadas en git.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+La configuración vive en `src/database/data-source.ts` y la comparten la app (vía
+`TypeOrmModule.forRoot`) y el CLI de TypeORM, para que no puedan divergir. Las migraciones
+están en `src/database/migrations/`.
+
+### Cambiar o agregar un modelo
+
+1. Edita la entidad. Por ejemplo, añadir un campo a `User`:
+
+   ```ts
+   @Column({ nullable: true })
+   phone: string;
+   ```
+
+2. Genera la migración:
+
+   ```bash
+   pnpm migration:generate src/database/migrations/AddUserPhone
+   ```
+
+3. **Lee el SQL generado y corrígelo si hace falta.** Ver la sección siguiente.
+
+4. Aplícala:
+
+   ```bash
+   pnpm migration:run
+   ```
+
+5. Commitea la entidad y la migración **en el mismo commit**. Si van separados, quien haga
+   pull en medio se queda con código que espera columnas que su base no tiene.
+
+### Revisar siempre el SQL generado
+
+El generador compara estados, no entiende intenciones. Hay tres casos en los que produce
+SQL que destruye datos o que falla al ejecutarse:
+
+**Renombrar una columna** sale como `DROP COLUMN` + `ADD COLUMN`. Reescríbelo:
+
+```ts
+await queryRunner.query(
+  `ALTER TABLE "user" RENAME COLUMN "name" TO "fullName"`,
+);
+```
+
+**Columna nueva `NOT NULL` sobre una tabla con filas** falla en seco. Hazlo en tres pasos
+dentro de la misma migración: añadir nullable, poblar con un `UPDATE`, y después
+`SET NOT NULL`.
+
+**Cambiar el tipo de una columna con datos** también sale como `DROP` + `ADD`. Casi siempre
+lo que quieres es:
+
+```ts
+await queryRunner.query(
+  `ALTER TABLE "user" ALTER COLUMN "role" TYPE character varying USING "role"::text`,
+);
+```
+
+`src/database/migrations/1785458235588-AlignVarcharColumns.ts` es un ejemplo real de esto
+en el repo: el generador proponía borrar y recrear `user.email`, `user.name`, `user.role` y
+`account.password`, lo que habría vaciado las credenciales existentes.
+
+### Migraciones a mano
+
+Para lo que no se deriva de las entidades — seeds, backfills, índices, poblar una columna
+nueva — el generador no sirve. Crea el archivo vacío y escribe el SQL:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm migration:create src/database/migrations/BackfillUserRoles
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Reglas
 
-## Resources
+- **Una migración aplicada es inmutable.** Si te equivocaste, otra migración encima. Editar
+  una vieja hace que tu base y la de tus compañeros diverjan en silencio.
+- **Escribe siempre el `down`**, aunque no lo uses. Te obliga a comprobar si el cambio es
+  reversible; si no lo es, mejor saberlo antes de desplegarlo.
+- **`migration:revert` es para local.** Revierte solo la última. En producción se avanza, no
+  se retrocede.
+- **Cambios destructivos en producción, en dos despliegues**: primero se deja de usar la
+  columna, en el siguiente se borra.
+- **Nunca `migrationsRun: true`.** Con varias instancias arrancando en paralelo tendrías dos
+  procesos migrando a la vez.
 
-Check out a few resources that may come in handy when working with NestJS:
+### Base ya existente sin registro de migraciones
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Si te encuentras una base creada por `synchronize` (tablas ya presentes, tabla `migrations`
+vacía o inexistente), no ejecutes la migración inicial: fallaría porque los objetos ya
+existen. Hay que marcarla como aplicada sin ejecutar su SQL, insertando su fila a mano:
 
-## Support
+```sql
+CREATE TABLE IF NOT EXISTS "migrations" (
+  "id" SERIAL NOT NULL,
+  "timestamp" bigint NOT NULL,
+  "name" character varying NOT NULL,
+  CONSTRAINT "PK_8c82d7f526340ab734260ea46be" PRIMARY KEY ("id")
+);
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+INSERT INTO "migrations"("timestamp", "name")
+VALUES (1785454896602, 'InitialSchema1785454896602');
+```
 
-## Stay in touch
+TypeORM no tiene un equivalente a `--fake`. Después, `pnpm migration:generate` sobre un
+nombre cualquiera debe responder _"No changes in database schema were found"_; si detecta
+cambios, la base y las entidades no cuadran y hay que resolver el drift con una migración
+antes de seguir.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Despliegue
 
-## License
+Las migraciones son un paso explícito del despliegue, previo al arranque de la app:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+pnpm build
+pnpm migration:run:prod   # usa el DataSource compilado en dist/
+pnpm start:prod
+```

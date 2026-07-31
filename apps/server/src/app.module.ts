@@ -2,6 +2,7 @@ import { Module, OnModuleInit } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppController } from "./app.controller";
+import { dataSourceOptions } from "./database/data-source";
 import { AuthModule } from "./modules/auth/auth.module";
 import { IncidentsModule } from "./modules/incidents/incidents.module";
 import { ShopsModule } from "./modules/shops/shops.module";
@@ -11,14 +12,8 @@ import { UsersModule } from "./modules/users/users.module";
 	imports: [
 		ConfigModule.forRoot(),
 		TypeOrmModule.forRoot({
-			type: "postgres",
-			host: process.env.DB_HOST,
-			port: Number(process.env.DB_PORT),
-			username: process.env.DB_USER,
-			password: process.env.DB_PASSWORD,
-			database: process.env.DB_NAME,
+			...dataSourceOptions,
 			retryAttempts: 3,
-			synchronize: false,
 			autoLoadEntities: true,
 			cache: {
 				type: "redis",
