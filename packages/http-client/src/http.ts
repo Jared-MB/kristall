@@ -6,11 +6,12 @@ import type {
 	HttpRequest,
 	RequestInterceptor,
 } from "./types";
+import { resolveSlugs } from "./utils/build-url";
 import { getHeaders } from "./utils/get-headers";
 import { handleResponse } from "./utils/handle-response";
 
 async function executeRequest<T>(
-	method: "GET" | "POST",
+	method: HttpRequest["method"],
 	url: `/${string}`,
 	options: any,
 	body?: BodyInit | null,
@@ -25,7 +26,10 @@ async function executeRequest<T>(
 		);
 	}
 
-	const server = `${options.serverUrl}${url}`;
+	// No-op when the url has already been resolved by `createHttpClient`
+	const path = resolveSlugs(url, options?.slugs);
+
+	const server = `${options.serverUrl}${path}`;
 
 	let request: HttpRequest = {
 		url: server,
@@ -70,10 +74,8 @@ export async function GET<T>(
 	return executeRequest<T>("GET", url, options);
 }
 
-export async function POST<
-	T,
-	ApiPayload extends z.ZodType | undefined = undefined,
->(
+async function mutate<T, ApiPayload extends z.ZodType | undefined = undefined>(
+	method: "POST" | "PATCH",
 	url: `/${string}`,
 	body: ApiPayload extends z.ZodTypeAny ? z.infer<ApiPayload> : unknown,
 	options: HttpMutationOptions<ApiPayload> = {},
@@ -92,9 +94,31 @@ export async function POST<
 	}
 
 	const serializedBody =
-		bodyType === "json" ? JSON.stringify(requestBody) : serialize(requestBody);
+		bodyType === "json"
+			? JSON.stringify(requestBody)
+			: serialize(requestBody);
 
-	return executeRequest<T>("POST", url, options, serializedBody);
+	return executeRequest<T>(method, url, options, serializedBody);
 }
 
-export const PATCH = POST;
+export async function POST<
+	T,
+	ApiPayload extends z.ZodType | undefined = undefined,
+>(
+	url: `/${string}`,
+	body: ApiPayload extends z.ZodTypeAny ? z.infer<ApiPayload> : unknown,
+	options: HttpMutationOptions<ApiPayload> = {},
+) {
+	return mutate<T, ApiPayload>("POST", url, body, options);
+}
+
+export async function PATCH<
+	T,
+	ApiPayload extends z.ZodType | undefined = undefined,
+>(
+	url: `/${string}`,
+	body: ApiPayload extends z.ZodTypeAny ? z.infer<ApiPayload> : unknown,
+	options: HttpMutationOptions<ApiPayload> = {},
+) {
+	return mutate<T, ApiPayload>("PATCH", url, body, options);
+}

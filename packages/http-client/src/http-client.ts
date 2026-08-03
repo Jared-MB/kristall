@@ -5,11 +5,28 @@ import type {
 	HttpOptions,
 	HttpResult,
 	Interceptors,
+	ParamValues,
+	RequiresOptions,
 	Route,
+	SlugValues,
 } from "./types";
 import { buildUrl } from "./utils/build-url";
 
 type RouteDefs = Record<string, Route>;
+
+type QueryOptions<R extends Route> = Omit<HttpOptions, "serverUrl" | "slugs"> &
+	ParamValues<R> &
+	SlugValues<R>;
+
+type MutationOptions<R extends Route> = Omit<
+	HttpMutationOptions<R["apiPayload"]>,
+	"serverUrl" | "slugs"
+> &
+	ParamValues<R> &
+	SlugValues<R>;
+
+type OptionsArg<R extends Route, O> =
+	RequiresOptions<R> extends true ? [options: O] : [options?: O];
 
 export function createHttpClient<Routes extends RouteDefs>(config: {
 	serverUrl: string | undefined;
@@ -18,13 +35,7 @@ export function createHttpClient<Routes extends RouteDefs>(config: {
 }): {
 	GET: <U extends keyof Routes>(
 		alias: U,
-		...args: undefined extends Routes[U]["params"]
-			? [options?: Omit<HttpOptions, "serverUrl">]
-			: [
-					options: Omit<HttpOptions, "serverUrl"> & {
-						params: z.infer<NonNullable<Routes[U]["params"]>>;
-					},
-				]
+		...args: OptionsArg<Routes[U], QueryOptions<Routes[U]>>
 	) => Promise<HttpResult<Routes[U]["returns"]>>;
 
 	POST: <U extends keyof Routes>(
@@ -32,21 +43,7 @@ export function createHttpClient<Routes extends RouteDefs>(config: {
 		body: Routes[U]["apiPayload"] extends z.ZodTypeAny
 			? z.infer<Routes[U]["apiPayload"]>
 			: unknown,
-		...args: undefined extends Routes[U]["params"]
-			? [
-					options?: Omit<
-						HttpMutationOptions<Routes[U]["apiPayload"]>,
-						"serverUrl"
-					>,
-				]
-			: [
-					options: Omit<
-						HttpMutationOptions<Routes[U]["apiPayload"]>,
-						"serverUrl"
-					> & {
-						params?: z.infer<NonNullable<Routes[U]["params"]>>;
-					},
-				]
+		...args: OptionsArg<Routes[U], MutationOptions<Routes[U]>>
 	) => Promise<HttpResult<Routes[U]["returns"]>>;
 
 	PATCH: <U extends keyof Routes>(
@@ -54,66 +51,60 @@ export function createHttpClient<Routes extends RouteDefs>(config: {
 		body: Routes[U]["apiPayload"] extends z.ZodTypeAny
 			? z.infer<Routes[U]["apiPayload"]>
 			: unknown,
-		...args: undefined extends Routes[U]["params"]
-			? [
-					options?: Omit<
-						HttpMutationOptions<Routes[U]["apiPayload"]>,
-						"serverUrl"
-					>,
-				]
-			: [
-					options: Omit<
-						HttpMutationOptions<Routes[U]["apiPayload"]>,
-						"serverUrl"
-					> & {
-						params?: z.infer<NonNullable<Routes[U]["params"]>>;
-					},
-				]
+		...args: OptionsArg<Routes[U], MutationOptions<Routes[U]>>
 	) => Promise<HttpResult<Routes[U]["returns"]>>;
 };
 
 // IMPLEMENTATION
-export function createHttpClient({
+export function createHttpClient<Routes extends RouteDefs>({
 	serverUrl,
 	routes,
-	adapter,
 	interceptors,
-}: any) {
-	const getParsedURL = (alias: string, params: Record<string, any> = {}) => {
-		if (routes[alias].params instanceof ZodType) {
-			const parsedParams = routes[alias].params.parse(params);
-			return buildUrl(routes[alias].url, parsedParams);
-		}
+}: {
+	serverUrl: string | undefined;
+	routes: Routes;
+	interceptors?: Interceptors;
+}) {
+	const getParsedURL = (alias: string, options: Record<string, any> = {}) => {
+		const route = routes[alias];
+		const { params = {}, slugs = {} } = options;
 
-		return buildUrl(routes[alias].url, params);
+		const parsedParams =
+			route.params instanceof ZodType
+				? route.params.parse(params)
+				: params;
+
+		const parsedSlugs =
+			route.slugs instanceof ZodType ? route.slugs.parse(slugs) : slugs;
+
+		return buildUrl(route.url, parsedParams as any, parsedSlugs as any);
 	};
+
+	/**
+	 * `params` and `slugs` are already baked into the url, so they are not
+	 * forwarded to the underlying primitives.
+	 */
+	const getRequestOptions = ({ params, slugs, ...rest }: any = {}) => ({
+		...rest,
+		serverUrl,
+		interceptors,
+	});
 
 	const get = async (alias: string, ...args: any[]) => {
 		const options = args[0];
-		return GET(getParsedURL(alias, options?.params), {
-			...options,
-			serverUrl,
-			adapter,
-			interceptors,
-		});
+		return GET(getParsedURL(alias, options), getRequestOptions(options));
 	};
 
 	const post = async (alias: string, body: any, options: any) => {
-		return POST(getParsedURL(alias, options?.params), body, {
-			...options,
-			serverUrl,
-			adapter,
-			interceptors,
+		return POST(getParsedURL(alias, options), body, {
+			...getRequestOptions(options),
 			apiPayload: routes[alias]?.apiPayload,
 		});
 	};
 
 	const patch = async (alias: string, body: any, options: any) => {
-		return PATCH(getParsedURL(alias, options?.params), body, {
-			...options,
-			serverUrl,
-			adapter,
-			interceptors,
+		return PATCH(getParsedURL(alias, options), body, {
+			...getRequestOptions(options),
 			apiPayload: routes[alias]?.apiPayload,
 		});
 	};

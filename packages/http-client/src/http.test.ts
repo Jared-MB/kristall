@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { GET, POST } from "./http";
+import { GET, PATCH, POST } from "./http";
 import { buildUrl } from "./utils/build-url";
 
 // Mock fetch globally
@@ -55,6 +55,31 @@ describe("http.ts primitives", () => {
 			const result = buildUrl("/api/search", { q: "hello world" });
 			expect(result).toBe("/api/search?q=hello+world");
 		});
+
+		it("should replace slug segments with their values", () => {
+			expect(buildUrl("/users/:id", undefined, { id: "42" })).toBe(
+				"/users/42?",
+			);
+			expect(
+				buildUrl(
+					"/users/:userId/posts/:postId",
+					{ draft: true },
+					{
+						userId: "1",
+						postId: 2,
+					},
+				),
+			).toBe("/users/1/posts/2?draft=true");
+		});
+
+		it("should throw when a slug value is missing", () => {
+			expect(() => buildUrl("/users/:id")).toThrow(
+				"Missing value for slug **:id** on **/users/:id**",
+			);
+			expect(() =>
+				buildUrl("/users/:id", undefined, { other: "x" }),
+			).toThrow("Missing value for slug **:id**");
+		});
 	});
 
 	describe("GET", () => {
@@ -79,9 +104,9 @@ describe("http.ts primitives", () => {
 				...defaultOptions,
 				interceptors: { request: requestInterceptors },
 			});
-			expect(fetchMock.mock.calls[0][1].headers.get("Authorization")).toBe(
-				"Bearer fake-token",
-			);
+			expect(
+				fetchMock.mock.calls[0][1].headers.get("Authorization"),
+			).toBe("Bearer fake-token");
 
 			// If auth is false, it removes any existing token from the interceptor
 			await GET("/public", {
@@ -97,6 +122,18 @@ describe("http.ts primitives", () => {
 		it("should throw an error if serverUrl is missing", async () => {
 			await expect(GET("/users", {})).rejects.toThrow(
 				"Server URL is not defined for **GET** request on **/users**",
+			);
+		});
+
+		it("should resolve slug segments passed directly in the options", async () => {
+			await GET("/users/:id", {
+				...defaultOptions,
+				auth: false,
+				slugs: { id: "abc123" },
+			});
+			expect(fetchMock).toHaveBeenCalledWith(
+				"https://api.example.com/users/abc123",
+				expect.objectContaining({ method: "GET" }),
 			);
 		});
 	});
@@ -158,6 +195,39 @@ describe("http.ts primitives", () => {
 		it("should throw an error if serverUrl is missing", async () => {
 			await expect(POST("/users", {}, { auth: false })).rejects.toThrow(
 				"Server URL is not defined for **POST** request on **/users**",
+			);
+		});
+	});
+
+	describe("PATCH", () => {
+		const defaultOptions = {
+			serverUrl: "https://api.example.com",
+			auth: false,
+		};
+
+		it("should perform a PATCH request with JSON body", async () => {
+			await PATCH("/users/1", { name: "John" }, defaultOptions);
+			expect(fetchMock).toHaveBeenCalledWith(
+				"https://api.example.com/users/1",
+				expect.objectContaining({
+					method: "PATCH",
+					body: JSON.stringify({ name: "John" }),
+				}),
+			);
+		});
+
+		it("should resolve slugs like the other primitives", async () => {
+			await PATCH(
+				"/users/:id",
+				{ name: "John" },
+				{
+					...defaultOptions,
+					slugs: { id: "1" },
+				},
+			);
+			expect(fetchMock).toHaveBeenCalledWith(
+				"https://api.example.com/users/1",
+				expect.objectContaining({ method: "PATCH" }),
 			);
 		});
 	});
@@ -261,7 +331,8 @@ describe("http.ts primitives", () => {
 								({
 									...res,
 									status: 201,
-									text: async () => JSON.stringify({ modifiedBody: true }),
+									text: async () =>
+										JSON.stringify({ modifiedBody: true }),
 								}) as Response,
 						],
 					},

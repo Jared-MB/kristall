@@ -93,11 +93,62 @@ Routes are plain objects that satisfy the `ServerRoutes` type.
 
 | Field | Type | Description |
 |---|---|---|
-| `url` | `` `/${string}` `` | Endpoint path (must start with `/`) |
+| `url` | `` `/${string}` `` | Endpoint path (must start with `/`), may contain `:slug` segments |
+| `slugs` | `z.ZodObject` | Dynamic path segments schema — keys must match the segment names without the colon |
 | `params` | `z.ZodObject` | Query parameters schema — enables validation and coercion |
 | `apiPayload` | `z.ZodObject` | Request body schema — validated before the request is sent |
 | `clientInput` | `z.ZodObject` | Input schema for the UI layer (e.g. form validation) — not sent to the API |
 | `returns` | `unknown` | Shape of the API response (type-only, not runtime) |
+
+### Dynamic Segments (`slugs`)
+
+Write the dynamic parts of a path as `:name` and declare a matching `slugs` schema. The client validates the values and substitutes them into the URL before the request is sent.
+
+```typescript
+export const APP_ROUTES = {
+  'get-user': {
+    url: '/api/users/:id',
+    slugs: z.object({ id: z.string() }),
+    returns: {} as { id: string; name: string },
+  },
+  'get-user-post': {
+    url: '/api/users/:userId/posts/:postId',
+    slugs: z.object({ userId: z.string(), postId: z.coerce.string() }),
+    params: z.object({ draft: z.boolean().optional() }),
+    returns: {} as { id: string; title: string },
+  },
+} satisfies ServerRoutes
+```
+
+```typescript
+// GET /api/users/abc123
+const [error, user] = await client.GET('get-user', { slugs: { id: 'abc123' } })
+
+// GET /api/users/abc123/posts/7?draft=true
+const [error, post] = await client.GET('get-user-post', {
+  slugs: { userId: 'abc123', postId: 7 },
+  params: { draft: true },
+})
+
+// Mutations take slugs in the same place
+const [error, updated] = await client.PATCH('update-user', body, {
+  slugs: { id: 'abc123' },
+})
+```
+
+Rules:
+
+- Slug keys are the segment name **without** the colon — `/users/:id` → `{ id }`
+- When a route declares `slugs`, the options argument becomes **required** and `slugs` must be provided (the same rule `params` already follows)
+- Passing `slugs` to a route that declares none is a type error, and so is an unknown or mistyped slug key
+- Values are `encodeURIComponent`-escaped
+- A `:segment` with no value **throws** — the request is never sent to a literal `:id` path
+
+The low-level `GET`/`POST` primitives accept `slugs` too, as plain values with no schema:
+
+```typescript
+await GET('/api/users/:id', { serverUrl, slugs: { id: 'abc123' } })
+```
 
 ### Error Handling
 
@@ -135,21 +186,6 @@ const [error, data] = await client.POST('login', credentials, { auth: false })
 > [!CAUTION]
 > If `auth` is `true` (the default) and no `Authorization` header is present after interceptors run, the client **throws synchronously** — it does not return an error tuple.
 
-### Adapters
-
-An adapter transforms the raw API response before it reaches your application.
-
-```typescript
-export const client = createHttpClient({
-  serverUrl: process.env.API_URL,
-  routes: APP_ROUTES,
-  // API returns { data: [...] } — adapter extracts the array
-  adapter: (response) => response.data,
-})
-```
-
-When an adapter is provided, the `data` field of the result tuple is typed as the adapter's return type, not the raw `returns` type.
-
 ---
 
 ## API Reference
@@ -162,13 +198,12 @@ Creates a typed HTTP client.
 |---|---|---|
 | `serverUrl` | `string \| undefined` | Base URL for your API |
 | `routes` | `ServerRoutes` | Route definitions object |
-| `adapter` | `(data: any) => any` | (Optional) Transform the response body |
 | `interceptors` | `Interceptors` | (Optional) Request/response interceptors |
 
 ### `client.GET(alias[, options])`
 
-- **`options` is omittable** when the route has no `params` schema
-- **`options` is required** (and must include `params`) when the route defines a `params: z.object(...)` schema
+- **`options` is omittable** when the route has no `params` and no `slugs` schema
+- **`options` is required** (and must include them) when the route defines a `params` or `slugs` schema
 
 ```typescript
 // Route defines `params: z.object(...)` — options is required
@@ -187,17 +222,19 @@ const [error, profile] = await client.GET('get-profile', { auth: false })
 | Property | Required | Type | Default | Description |
 |---|---|---|---|---|
 | `params` | When route defines a `params` schema | `z.infer<Route["params"]>` | — | Query parameters, validated and coerced by the route's Zod schema |
+| `slugs` | When route defines a `slugs` schema | `z.infer<Route["slugs"]>` | — | Values for the `:name` segments of the url |
 | `auth` | No | `boolean` | `true` | Whether to enforce the `Authorization` header |
 
 ### `client.POST(alias, body[, options])`
 
 If the route defines an `apiPayload` schema, the body is **validated and coerced** before being sent. Invalid data returns `[ZodError, null]` without making a network request.
 
-**Options (all optional):**
+**Options:**
 
 | Property | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `params` | No | `object` | — | Query parameters appended to the URL |
+| `params` | When route defines a `params` schema | `z.infer<Route["params"]>` | — | Query parameters appended to the URL |
+| `slugs` | When route defines a `slugs` schema | `z.infer<Route["slugs"]>` | — | Values for the `:name` segments of the url |
 | `bodyType` | No | `'json' \| 'form-data'` | `'json'` | Serialization format |
 | `auth` | No | `boolean` | `true` | Whether to enforce the `Authorization` header |
 
