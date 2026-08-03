@@ -1,5 +1,6 @@
 export type {
 	ApiErrorResponse,
+	ApiFieldError,
 	ApiResponse,
 	ApiSuccessResponse,
 } from "./api-response.type.ts";

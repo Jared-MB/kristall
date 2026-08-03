@@ -1,4 +1,15 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+
+/**
+ * A validation failure attributed to a single input field.
+ */
+export class ApiFieldErrorDto {
+	@ApiProperty({ example: "address" })
+	field: string;
+
+	@ApiProperty({ example: "Address must be between 5 and 75 characters" })
+	message: string;
+}
 
 /**
  * Documents the envelope added by `TransformInterceptor` to every successful
@@ -34,4 +45,12 @@ export class ApiErrorResponseDto {
 		example: "Bad Request",
 	})
 	error: Record<string, unknown> | string;
+
+	@ApiPropertyOptional({
+		description:
+			"Present when the failure can be attributed to specific input fields",
+		type: ApiFieldErrorDto,
+		isArray: true,
+	})
+	fields?: ApiFieldErrorDto[];
 }
