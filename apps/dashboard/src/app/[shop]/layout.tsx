@@ -35,7 +35,7 @@ export default function HomeLayout({
 						<ShopName params={params} />
 					</Suspense>
 				</header>
-				{children}
+				<div className="p-6">{children}</div>
 			</div>
 		</SidebarProvider>
 	);

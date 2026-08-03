@@ -1,6 +1,16 @@
-import { IconPackage } from "@tabler/icons-react";
+import { IconMapPin, IconPackage } from "@tabler/icons-react";
+import type { JSX } from "react/jsx-runtime";
 
-export const LINKS = [
+type Links = {
+	group: string;
+	items: {
+		label: string;
+		url: string;
+		icon: JSX.Element;
+	}[];
+}[];
+
+export const LINKS: Links = [
 	{
 		group: "Gestión",
 		items: [
@@ -8,6 +18,11 @@ export const LINKS = [
 				label: "Productos",
 				url: "/products",
 				icon: <IconPackage />,
+			},
+			{
+				label: "Ubicaciones",
+				url: "/locations",
+				icon: <IconMapPin />,
 			},
 		],
 	},
