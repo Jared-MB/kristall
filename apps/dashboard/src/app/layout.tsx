@@ -6,6 +6,7 @@ import { Geist_Mono, Quicksand } from "next/font/google";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const quicksandSans = Quicksand({
 	variable: "--font-quicksand-sans",
@@ -31,7 +32,13 @@ export default function RootLayout({
 		<html
 			lang="en"
 			suppressHydrationWarning
-			className={`${quicksandSans.variable} ${geistMono.variable} h-full antialiased`}
+			className={cn(
+				quicksandSans.variable,
+				geistMono.variable,
+				"h-full",
+				"antialiased",
+				"font-sans",
+			)}
 		>
 			<body className="min-h-full">
 				<ThemeProvider
