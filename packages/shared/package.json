@@ -6,6 +6,9 @@
 	"exports": {
 		".": "./src/index.ts"
 	},
+	"//": "main/types duplicate the exports map for node10 resolution (TypeORM CLI forces it).",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
 	"scripts": {
 		"check-types": "tsc --noEmit",
 		"lint": "biome lint"

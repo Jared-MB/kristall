@@ -1,4 +1,11 @@
 {
+  // Solo lo usa el CLI de TypeORM (ts-node en CJS): fuerza a tratar los
+  // paquetes del workspace como CommonJS pese a su "type": "module".
+  "ts-node": {
+    "moduleTypes": {
+      "../../packages/**/*": "cjs"
+    }
+  },
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
