@@ -51,7 +51,7 @@ export async function register(formData: FormData) {
 	loginFormData.append("password", payload.account.password);
 
 	try {
-		await login(loginFormData);
+		await login(null, loginFormData);
 	} catch (error) {
 		return {
 			error: {
