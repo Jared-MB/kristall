@@ -5,6 +5,8 @@ import { AppController } from "./app.controller";
 import { dataSourceOptions } from "./database/data-source";
 import { AuthModule } from "./modules/auth/auth.module";
 import { IncidentsModule } from "./modules/incidents/incidents.module";
+import { LocationsModule } from "./modules/locations/locations.module";
+import { ProductsModule } from "./modules/products/products.module";
 import { ShopsModule } from "./modules/shops/shops.module";
 import { UsersModule } from "./modules/users/users.module";
 
@@ -27,6 +29,8 @@ import { UsersModule } from "./modules/users/users.module";
 		ShopsModule,
 		UsersModule,
 		IncidentsModule,
+		ProductsModule,
+		LocationsModule,
 	],
 	controllers: [AppController],
 })

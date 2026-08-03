@@ -33,6 +33,7 @@ export function setupSwagger(app: INestApplication) {
 		)
 		.addTag("auth", "Login, registration and session inspection")
 		.addTag("shop", "Shop the authenticated user belongs to")
+		.addTag("locations", "Locations owned by the authenticated user's shop")
 		.addTag("incidents", "Service health incidents")
 		.addTag("health", "Liveness probe")
 		.build();
