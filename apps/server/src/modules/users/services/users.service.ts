@@ -24,7 +24,7 @@ export class UsersService {
 			email: params.email,
 			name: params.name,
 			role: params.role,
-			shop: { _id: params.shopId },
+			shopId: params.shopId,
 		});
 	}
 

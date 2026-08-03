@@ -9,4 +9,11 @@ export class TokenPayloadDto {
 
 	@ApiProperty({ example: "Jane Doe" })
 	name: string;
+
+	@ApiProperty({
+		format: "uuid",
+		nullable: true,
+		description: "Tienda a la que pertenece el usuario",
+	})
+	shopId: string | null;
 }

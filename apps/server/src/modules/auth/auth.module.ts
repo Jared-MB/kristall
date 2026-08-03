@@ -10,6 +10,7 @@ import { jwtConstants } from "./constants";
 import { AuthController } from "./controllers/auth.controller";
 import { Account } from "./entities/account.entity";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { ShopScopeGuard } from "./guards/shop-scope.guard";
 import { AccountService } from "./services/account.service";
 import { AuthService } from "./services/auth.service";
 import { JwtStrategy } from "./strategies/jwt.strategy";
@@ -34,6 +35,10 @@ import { LocalStrategy } from "./strategies/local.strategy";
 		{
 			provide: APP_GUARD,
 			useClass: JwtAuthGuard,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: ShopScopeGuard,
 		},
 		AccountService,
 	],
