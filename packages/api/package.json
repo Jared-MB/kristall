@@ -7,6 +7,8 @@
 		".": "./src/index.ts",
 		"./auth": "./src/auth/index.ts",
 		"./shop": "./src/shop/index.ts",
+		"./incidents": "./src/incidents/index.ts",
+		"./locations": "./src/locations/index.ts",
 		"./app": "./src/app/index.ts"
 	},
 	"scripts": {
