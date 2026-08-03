@@ -1,5 +1,5 @@
+import { MODULES_ARRAY, type Modules } from "@kristall/shared";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { MODULES_ARRAY, type Modules } from "../../../common/types/modules";
 import { User } from "../../users/entities/user.entity";
 
 @Entity()

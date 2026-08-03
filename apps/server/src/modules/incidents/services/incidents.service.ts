@@ -1,8 +1,8 @@
+import { MODULES_ARRAY, type Modules } from "@kristall/shared";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DateTime } from "luxon";
 import { Between, type Repository } from "typeorm";
-import { MODULES_ARRAY, type Modules } from "../../../common/types/modules";
 import { Incident } from "../entities/incident.entity";
 
 @Injectable()

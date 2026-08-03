@@ -1,3 +1,4 @@
+import { MODULES_ARRAY, type Modules } from "@kristall/shared";
 import {
 	BadRequestException,
 	Controller,
@@ -10,7 +11,6 @@ import {
 	ApiErrorWrapped,
 	ApiOkWrapped,
 } from "../../../common/decorators/api-response.decorator";
-import { MODULES_ARRAY, type Modules } from "../../../common/types/modules";
 import { Public } from "../../auth/decorators/public.decorator";
 import { DailyResumeDto, IncidentDto } from "../dtos/incident-resume.dto";
 import type { Incident } from "../entities/incident.entity";

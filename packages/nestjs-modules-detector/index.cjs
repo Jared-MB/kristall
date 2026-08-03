@@ -5,7 +5,7 @@ const path = require('node:path');
 const chokidar = require('chokidar');
 
 const modulesRoute = path.resolve(__dirname, '../../apps/server/src/modules');
-const typesRoute = path.resolve(__dirname, '../../apps/server/src/common/types');
+const typesRoute = path.resolve(__dirname, '../shared/src');
 
 const watcher = chokidar.watch(modulesRoute, {
 	ignoreInitial: true,
@@ -31,11 +31,15 @@ watcher.on('unlinkDir', async (dirPath) => {
 
 async function writeModuleNames() {
 	const dirs = await fs.readdir(modulesRoute);
+	const names = dirs.map(dir => `"${dir}"`);
 
 	await fs.writeFile(path.join(typesRoute, 'modules.ts'),
-		`export type Modules = ${dirs.map(dir => `"${dir}"`).join(' | ')};
-export const MODULES_ARRAY = [${dirs.map(dir => `"${dir}"`).join(', ')}] as const;
-		`.replaceAll("'", '"')
+		`// GENERATED FILE - do not edit.
+// Written by packages/nestjs-modules-detector from apps/server/src/modules.
+export type Modules = ${names.join(' | ')};
+
+export const MODULES_ARRAY = [${names.join(', ')}] as const;
+`
 	)
 
 	console.log("Module names written correctly")

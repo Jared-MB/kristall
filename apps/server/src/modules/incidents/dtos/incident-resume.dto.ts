@@ -1,5 +1,5 @@
+import { MODULES_ARRAY, type Modules } from "@kristall/shared";
 import { ApiProperty } from "@nestjs/swagger";
-import { MODULES_ARRAY, type Modules } from "../../../common/types/modules";
 
 export class ModuleResumeDto {
 	@ApiProperty({
