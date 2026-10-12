@@ -10,6 +10,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@base-ui/react": "1.9.0",
     "@kristall/api": "workspace:*",
     "@kristall/http": "workspace:*",
     "@kristall/shared": "workspace:*",
