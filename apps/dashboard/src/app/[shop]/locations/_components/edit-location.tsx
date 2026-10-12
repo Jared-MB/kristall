@@ -21,12 +21,12 @@ export function EditLocation({
 	children,
 	location,
 }: {
-	children: React.ReactNode;
+	children: React.ReactElement;
 	location: Location;
 }) {
 	return (
 		<Dialog>
-			<DialogTrigger asChild>{children}</DialogTrigger>
+			<DialogTrigger render={children} />
 			<DialogContent>
 				<EditLocationForm location={location} />
 			</DialogContent>

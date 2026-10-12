@@ -14,10 +14,17 @@ import { createLocation } from "@/modules/locations/services/create-location.act
 import type { LocationFormState } from "@/modules/locations/utils/form-state";
 import { LocationForm } from "./location-form";
 
-export function CreateLocation({ children }: { children: React.ReactNode }) {
+export function CreateLocation({
+	children,
+	nativeButton,
+}: {
+	children: React.ReactElement;
+	/** Set to `false` when `children` is not a `<button>`. */
+	nativeButton?: boolean;
+}) {
 	return (
 		<Dialog>
-			<DialogTrigger asChild>{children}</DialogTrigger>
+			<DialogTrigger render={children} nativeButton={nativeButton} />
 			<DialogContent>
 				<CreateLocationForm />
 			</DialogContent>

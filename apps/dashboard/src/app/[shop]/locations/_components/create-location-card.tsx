@@ -16,7 +16,7 @@ export function CreateLocationCard({
 	hasLocations: boolean;
 }) {
 	return (
-		<CreateLocation>
+		<CreateLocation nativeButton={false}>
 			<Empty className="border border-dashed cursor-pointer">
 				{hasLocations ? (
 					<EmptyHeader>

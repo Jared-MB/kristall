@@ -46,9 +46,7 @@ export function LocationForm({
 		<form action={action}>
 			<div className="flex flex-col gap-6 p-2 pb-6">
 				<DialogHeader>
-					<DialogTitle asChild>
-						<h3>{title}</h3>
-					</DialogTitle>
+					<DialogTitle render={<h3 />}>{title}</DialogTitle>
 				</DialogHeader>
 				{message ? (
 					<p role="alert" className="text-destructive text-sm">
@@ -92,10 +90,8 @@ export function LocationForm({
 				</FieldGroup>
 			</div>
 			<DialogFooter>
-				<DialogClose asChild>
-					<Button variant="outline" type="button">
-						Cancelar
-					</Button>
+				<DialogClose render={<Button variant="outline" type="button" />}>
+					Cancelar
 				</DialogClose>
 				{children}
 			</DialogFooter>
