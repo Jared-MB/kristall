@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
 		root: path.resolve(__dirname, "../.."),
 	},
 	cacheComponents: true,
+	partialPrefetching: true,
 	typedRoutes: true,
 	experimental: {
 		turbopackFileSystemCacheForBuild: true,
