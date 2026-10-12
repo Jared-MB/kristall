@@ -16,11 +16,12 @@ export function SidebarLink({
 	const href = `/${shop}${item.url}` as const;
 
 	return (
-		<SidebarMenuButton asChild isActive={pathName.startsWith(href)}>
-			<Link href={href}>
-				{item.icon}
-				{item.label}
-			</Link>
+		<SidebarMenuButton
+			render={<Link href={href} />}
+			isActive={pathName.startsWith(href)}
+		>
+			{item.icon}
+			{item.label}
 		</SidebarMenuButton>
 	);
 }

@@ -98,7 +98,7 @@ export function SidebarProfileSkeleton() {
 			<SidebarMenuItem>
 				<SidebarMenuButton
 					size="lg"
-					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+					className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
 				>
 					<Avatar className="h-8 w-8 rounded-full">
 						<AvatarFallback className="rounded-full"></AvatarFallback>
