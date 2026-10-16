@@ -5,14 +5,21 @@ import { startTransition, useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
+	DialogClose,
 	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
 	DialogTrigger,
 	useDialog,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
 import { createLocation } from "@/modules/locations/services/create-location.action";
 import type { LocationFormState } from "@/modules/locations/utils/form-state";
-import { LocationForm } from "./location-form";
+import {
+	LocationForm,
+	LocationFormFields,
+	LocationFormSubmit,
+} from "./location-form";
 
 export function CreateLocation({
 	children,
@@ -26,9 +33,31 @@ export function CreateLocation({
 		<Dialog>
 			<DialogTrigger render={children} nativeButton={nativeButton} />
 			<DialogContent>
-				<CreateLocationForm />
+				<CreateLocationDialogForm />
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+/** Lives inside `DialogContent` so it can reach the dialog to close it. */
+function CreateLocationDialogForm() {
+	const { setOpen } = useDialog();
+
+	return (
+		<CreateLocationForm onSuccess={() => setOpen(false)}>
+			<div className="flex flex-col gap-6 p-2 pb-6">
+				<DialogHeader>
+					<DialogTitle render={<h3>Crear nueva ubicación</h3>} />
+				</DialogHeader>
+				<LocationFormFields />
+			</div>
+			<DialogFooter>
+				<DialogClose render={<Button variant="outline" type="button" />}>
+					Cancelar
+				</DialogClose>
+				<CreateLocationSubmit />
+			</DialogFooter>
+		</CreateLocationForm>
 	);
 }
 
@@ -37,10 +66,22 @@ interface CreateState {
 	result: LocationFormState<Location>;
 }
 
-function CreateLocationForm() {
-	const { setOpen } = useDialog();
-
-	const [{ attempt, result }, action, isPending] = useActionState(
+/**
+ * Owns the create action; the layout comes in as children
+ * (`LocationFormFields`, `CreateLocationSubmit` and whatever chrome the
+ * container needs).
+ */
+export function CreateLocationForm({
+	onSuccess,
+	className,
+	children,
+}: {
+	/** Runs after the location is created, e.g. to close its container. */
+	onSuccess?: (location: Location | undefined) => void;
+	className?: string;
+	children: React.ReactNode;
+}) {
+	const [{ attempt, result }, action] = useActionState(
 		async (prev: CreateState, formData: FormData): Promise<CreateState> => {
 			const result = await createLocation(formData);
 
@@ -48,8 +89,8 @@ function CreateLocationForm() {
 				// `createLocation` already expired the list tag, so its response
 				// carries the re-rendered grid. React doesn't extend the action's
 				// transition past the `await`, so the close is wrapped to batch it
-				// with that re-render — otherwise the dialog closes a frame early.
-				startTransition(() => setOpen(false));
+				// with that re-render — otherwise a dialog closes a frame early.
+				startTransition(() => onSuccess?.(result.data));
 			}
 
 			return { attempt: prev.attempt + 1, result };
@@ -63,12 +104,17 @@ function CreateLocationForm() {
 			attempt={attempt}
 			fields={result?.error?.fields}
 			message={result?.error?.message}
-			title="Crear nueva ubicación"
+			className={className}
 		>
-			<Button type="submit" disabled={isPending}>
-				{isPending ? <Spinner /> : null}
-				{isPending ? "Creando ubicación…" : "Crear ubicación"}
-			</Button>
+			{children}
 		</LocationForm>
+	);
+}
+
+export function CreateLocationSubmit() {
+	return (
+		<LocationFormSubmit pendingLabel="Creando ubicación…">
+			Crear ubicación
+		</LocationFormSubmit>
 	);
 }
