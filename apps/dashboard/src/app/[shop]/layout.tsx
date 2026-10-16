@@ -1,4 +1,6 @@
+import { Desktop } from "@dayos/core";
 import { IconSelector } from "@tabler/icons-react";
+import Link from "next/link";
 import { Suspense } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProfile } from "@/modules/auth/services/get-profile.action";
+import { PortableApps } from "./_components/portable-apps";
 import { SidebarLink } from "./_components/sidebar-link";
 import { SidebarUser } from "./_components/sidebar-user";
 import { LINKS } from "./_constants/dashboard-links";
@@ -26,25 +29,32 @@ export default function HomeLayout({
 	params,
 }: LayoutProps<"/[shop]">) {
 	return (
-		<SidebarProvider>
-			<AppSidebar />
-			<div className="w-full">
-				<header className="h-16 border-b border-b-border px-6 flex items-center gap-4">
-					<SidebarTrigger />
-					<Suspense fallback={<div>Loading Name...</div>}>
-						<ShopName params={params} />
-					</Suspense>
-				</header>
-				<div className="p-6">{children}</div>
-			</div>
-		</SidebarProvider>
+		<Desktop>
+			<SidebarProvider>
+				<AppSidebar />
+				<div className="w-full">
+					<header className="h-16 border-b border-b-border px-6 flex items-center gap-4">
+						<SidebarTrigger />
+						<Suspense fallback={<div>Loading Name...</div>}>
+							<ShopName params={params} />
+						</Suspense>
+					</header>
+					<div className="p-6">{children}</div>
+				</div>
+			</SidebarProvider>
+			<PortableApps params={params} />
+		</Desktop>
 	);
 }
 
 async function ShopName({ params }: Pick<LayoutProps<"/[shop]">, "params">) {
 	const { shop } = await params;
 
-	return <h1 className="font-mono">{shop}</h1>;
+	return (
+		<h1 className="font-mono">
+			<Link href={`/${shop}`}>{shop}</Link>
+		</h1>
+	);
 }
 
 function AppSidebar() {

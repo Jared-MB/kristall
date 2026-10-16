@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { OpenNewProductsFormButton } from "./_components/open-new-products-form";
 
 export default function Home() {
 	return (
@@ -6,6 +7,7 @@ export default function Home() {
 			<Suspense fallback={<div>Loading more data...</div>}>
 				<LoadingMoreData />
 			</Suspense>
+			<OpenNewProductsFormButton />
 		</div>
 	);
 }

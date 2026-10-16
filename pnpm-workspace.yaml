@@ -18,3 +18,6 @@ packageExtensions:
     dependencies:
       "@babel/traverse": "^7.29.0"
       "@babel/generator": "^7.29.0"
+
+minimumReleaseAgeExclude:
+  - '@dayos/core@0.2.7'
