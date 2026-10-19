@@ -1,7 +1,6 @@
 "use client";
 
 import { useDesktop } from "@dayos/core";
-import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import {
 	Tooltip,
@@ -46,9 +45,12 @@ export function OpenedApps({
 	if (availableApps.length <= 0) return null;
 
 	return (
+		// Above every window, like macOS: DayOS stacks windows from z-index 1 up,
+		// and the genie canvas sits on this same layer, just under the dock.
+		// Below `z-50` so dialogs, sheets and popovers still cover it.
 		<nav
 			aria-label="Apps"
-			className="fixed bottom-[max(--spacing(4),env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-1 flex items-center gap-1 rounded-xl bg-background p-1.5 ring-1 ring-border shadow-lg"
+			className="fixed bottom-[max(--spacing(4),env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-xl bg-background p-1.5 ring-1 ring-border shadow-lg"
 		>
 			{availableApps.map((app) => {
 				const status = getAppStatus(desktop, app.id);
@@ -63,6 +65,8 @@ export function OpenedApps({
 									aria-label={`${app.name} (${status})`}
 									aria-pressed={isActive}
 									data-status={status}
+									// Where the window's genie animation lands and takes off.
+									data-genie-target={app.id}
 									onClick={() => toggleApp(desktop, app.id, status)}
 									className={cn(
 										"relative isolate grid size-10 place-content-center rounded-lg text-muted-foreground cursor-pointer touch-manipulation transition-[background-color,color,scale] hover:bg-muted hover:text-foreground active:scale-97 focus-visible:outline-2 focus-visible:outline-ring [&_svg]:size-5",
@@ -71,21 +75,6 @@ export function OpenedApps({
 								/>
 							}
 						>
-							{status === "open" ? null : (
-								// The window morphs into this tile when minimized and
-								// out of it when opened. Only mounted while the window
-								// isn't: two live nodes sharing a `layoutId` crossfade.
-								// Motion only scale-corrects px radii; 8px is `rounded-lg`.
-								<motion.span
-									aria-hidden
-									layoutId={app.id}
-									transition={{
-										layout: { duration: 0.24, type: "spring", bounce: 0 },
-									}}
-									style={{ borderRadius: 8 }}
-									className="absolute inset-0 -z-1"
-								/>
-							)}
 							{app.icon}
 							<StatusIndicator status={status} />
 						</TooltipTrigger>

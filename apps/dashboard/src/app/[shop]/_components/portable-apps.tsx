@@ -28,7 +28,7 @@ export function PortableApps({ params }: Pick<PageProps<"/[shop]">, "params">) {
 	return (
 		<>
 			<DesktopApp id="new-product">
-				<Window layoutId="new-product">
+				<Window>
 					<WindowHeader className="border-b border-b-border px-4 py-2 font-mono active:cursor-grabbing flex items-center justify-between">
 						<WindowName>New Product</WindowName>
 						<WindowActions className="[&_svg]:size-4 [&_button]:hover:bg-muted [&_button]:p-1 [&_button]:rounded-sm flex justify-center gap-2">
@@ -51,10 +51,7 @@ export function PortableApps({ params }: Pick<PageProps<"/[shop]">, "params">) {
 				</Window>
 			</DesktopApp>
 			<DesktopApp id="new-location">
-				<Window
-					layoutId="new-location"
-					defaultSize={{ width: 520, height: 460 }}
-				>
+				<Window defaultSize={{ width: 520, height: 460 }}>
 					<WindowHeader className="border-b border-b-border px-4 py-2 font-mono active:cursor-grabbing flex items-center justify-between">
 						<WindowName>Nueva ubicación</WindowName>
 						<WindowActions className="[&_svg]:size-4 [&_button]:hover:bg-muted [&_button]:p-1 [&_button]:rounded-sm flex justify-center gap-2">

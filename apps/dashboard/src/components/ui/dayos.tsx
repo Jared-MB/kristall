@@ -3,19 +3,31 @@
 import {
 	Window as DayOSWindow,
 	useDesktop,
+	useDesktopApp,
 	useWindowPresence,
 } from "@dayos/core";
 import { type HTMLMotionProps, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useGeniePresence } from "@/hooks/use-genie-presence";
 import { cn } from "@/lib/utils";
 
 type BodyProps = HTMLMotionProps<"section"> & {
 	"data-maximized"?: string;
 };
 
-function AnimatedWindowBody({ className, layoutId, ...props }: BodyProps) {
+function AnimatedWindowBody({ className, ...props }: BodyProps) {
+	const ref = useRef<HTMLElement>(null);
+	const { id } = useDesktopApp();
 	const { isPresent, safeToRemove } = useWindowPresence();
 	const reduceMotion = useReducedMotion();
+
+	// Open, close and minimize play a genie in and out of the app's dock tile.
+	const opacity = useGeniePresence({
+		ref,
+		appId: id,
+		isPresent,
+		safeToRemove,
+	});
 
 	// DayOS resizes and moves the `Rnd` box in a single frame when maximizing,
 	// so there's nothing to tween here: `layout` measures the box before and
@@ -34,57 +46,33 @@ function AnimatedWindowBody({ className, layoutId, ...props }: BodyProps) {
 		if (!isInteracting) setLayoutKey((key) => key + 1);
 	}
 
-	// Opacity only: the `layoutId` morph into the dock button already carries
-	// the size change, and a scale of its own would play on top of it.
-	const variants = {
-		open: { opacity: 1 },
-		closed: { opacity: 0.1 },
-	};
-
 	return (
 		<motion.section
 			{...props}
+			ref={ref}
 			className={cn(
 				"overflow-hidden border bg-background data-maximized:border-0 h-full relative data-maximized:z-10",
 				className,
 			)}
 			// In px and inline, not `var(--radius-md)`: motion can only
-			// scale-correct and interpolate px radii during the morph. 8px is
-			// `--radius-md`.
-			style={{ ...props.style, borderRadius: isMaximized ? 0 : 8 }}
-			variants={variants}
-			// Without driving the variants from `isPresent` the exit never plays,
-			// `safeToRemove` never runs, and DayOS keeps the closed window's box on
-			// the desktop, invisible but still catching the pointer.
-			initial="closed"
-			animate={isPresent ? "open" : "closed"}
+			// scale-correct px radii during the FLIP. 8px is `--radius-md`.
+			style={{ ...props.style, opacity, borderRadius: isMaximized ? 0 : 8 }}
 			// Only maximize/restore animates: drags and resizes must track the
 			// pointer 1:1.
-			layoutId={layoutId}
 			layout={!reduceMotion}
 			layoutDependency={layoutKey}
-			transition={{
-				duration: 0.3,
-				type: "spring",
-				bounce: 0,
-				layout: { duration: 0.24, type: "spring", bounce: 0 },
-			}}
-			onAnimationComplete={(definition) => {
-				if (!isPresent && definition === "closed") safeToRemove();
-			}}
+			transition={{ layout: { duration: 0.24, type: "spring", bounce: 0 } }}
 		/>
 	);
 }
 
-type WindowProps = Omit<React.ComponentProps<typeof DayOSWindow>, "render"> & {
-	layoutId?: string;
-};
+type WindowProps = Omit<React.ComponentProps<typeof DayOSWindow>, "render">;
 
-export function Window({ className, layoutId, ...props }: WindowProps) {
+export function Window({ className, ...props }: WindowProps) {
 	return (
 		<DayOSWindow
 			{...props}
-			render={<AnimatedWindowBody className={className} layoutId={layoutId} />}
+			render={<AnimatedWindowBody className={className} />}
 		/>
 	);
 }
