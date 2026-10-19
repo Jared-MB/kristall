@@ -5,10 +5,11 @@
 ### pnpm
 
 - Always install exact version for npm packages, installation commands SHOULD use `@latest` and `-E`, if a dependency fails on install due pnpm `minimumReleaseAge` use the previous version. E.g. `pnpm add react@latest -E`.
+- For specific app/package install use `--filter` from root. E.g. `pnpm add react@latest -E --filter=dashboard`
 
 ## Git
 
-- Don't switch branches until I tell you.
+- ALWAYS ask me if you want to change branch.
 
 ## Code styling
 
